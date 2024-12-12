@@ -38,7 +38,10 @@ public:
 	}
 
 	void SetSocket(SOCKET socket) { _socketClient = socket; }
-	void SetUserId(const char* userId) { memcpy(mUserId, userId, sizeof(userId)); }
+	void SetUserId(const char* userId) { 
+		size_t len = strlen(userId);
+		memcpy(mUserId, userId, len + 1);
+	}
 
 	SOCKET GetSocket() { return _socketClient; }
 	char* GetUserId() { return mUserId; }

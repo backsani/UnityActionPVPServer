@@ -26,6 +26,7 @@ public:
 	void RemoveClient(SOCKET playerId);
 
 	GameState GetState() const { return state; }
+	int GetSessionId() { return sessionId; }
 
 	void PrintSessionInfo() const {
 		std::cout << "Session ID: " << sessionId << "\nPlayers: ";

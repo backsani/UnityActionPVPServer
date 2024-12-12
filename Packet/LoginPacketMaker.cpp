@@ -17,8 +17,8 @@ int LoginPacketMaker::Serialzed(char* buffer, int size)
 	memcpy(data + Length, &ConnectionInfo, sizeof(ConnectionInfo));
 	Length += sizeof(ConnectionInfo);
 
-	memcpy(data + Length, buffer, sizeof(buffer));
-	Length += sizeof(buffer);
+	memcpy(data + Length, buffer, strlen(buffer));
+	Length += strlen(buffer);
 
 	memcpy(buffer, data, Length);
 
@@ -37,4 +37,5 @@ void LoginPacketMaker::Deserialzed(char* buffer)
 	Length = packetHeader.Length - Length;
 
 	UserID[Length] = '\0';
+	return;
 }

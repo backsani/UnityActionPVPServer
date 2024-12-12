@@ -2,6 +2,8 @@
 
 MatchPacketMaker::MatchPacketMaker()
 {
+    ConnectionInfo = INIT;
+    packetHeader.headerType = MATCH;
 }
 
 int MatchPacketMaker::Serialzed(char* buffer, int size)
@@ -10,11 +12,21 @@ int MatchPacketMaker::Serialzed(char* buffer, int size)
     int Length = 0;
     Length = PackingHeader(data);
 
-    return 0;
+    memcpy(data + Length, &ConnectionInfo, sizeof(ConnectionInfo));
+    Length += sizeof(ConnectionInfo);
+
+    memcpy(buffer, data, Length);
+
+    return Length;
 }
 
 void MatchPacketMaker::Deserialzed(char* buffer)
 {
     int Length = 0;
     Length += UnpackingHeader(buffer);
+
+    memcpy(&ConnectionInfo, buffer + Length, sizeof(ConnectionState));
+    Length += sizeof(ConnectionState);
+
+    return;
 }

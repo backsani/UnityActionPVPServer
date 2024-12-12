@@ -6,6 +6,7 @@ void GameSession::AddClient(ClientInfo* client)
 	if (clients.size() == 2)
 	{
 		state = GameState::PLAY;
+		PrintSessionInfo();
 	}
 }
 

@@ -7,7 +7,9 @@ Server::Server() {
 	this->packet.push_back(std::make_unique<LoginPacketMaker>());
 	this->packet.push_back(std::make_unique<MatchPacketMaker>());
 	// 윈속 초기화
-	mMatchManager = std::make_shared<MatchManager>();
+	mGameSessionManager = std::make_shared<GameSessionManager>();
+	mMatchManager = std::make_shared<MatchManager>(mGameSessionManager);
+	
 }
 
 Server::~Server()
@@ -173,13 +175,15 @@ void Server::WokerThread()
 		//Overlapped I/O Recv작업 결과 뒤 처리
 		if (IOOperation::RECV == pOverlappedEx->_operation)
 		{
-			packet[currentHeader]->Deserialzed(pClientInfo->mRecvBuf);
+			//packet[currentHeader]->Deserialzed(pClientInfo->mRecvBuf);
 
 			switch (currentHeader)
 			{
 			case HeaderType::ACCEPT:
 				{
 					auto loginPacket = static_cast<LoginPacketMaker*>(packet[currentHeader].get());
+
+					loginPacket->Deserialzed(pClientInfo->mRecvBuf);
 
 					//ConnectionState를 보고 로그인인지 회원가입인지 처리
 
@@ -188,27 +192,43 @@ void Server::WokerThread()
 					printf("[유저 접속] msg : %s\n", pClientInfo->GetUserId());
 					loginPacket->SetConnectionInfo(ConnectionState::LOGIN_SUCCESS);
 
-					memcpy(&pClientInfo->mSendBuf, pClientInfo->GetUserId(), sizeof(pClientInfo->GetUserId()));
+					int sendLength = strlen(pClientInfo->GetUserId());
+					memcpy(&pClientInfo->mSendBuf, pClientInfo->GetUserId(), sendLength);
 				}
 				break;
 			case HeaderType::MATCH:
 				{
-				auto matchPacket = static_cast<MatchPacketMaker*>(packet[currentHeader].get());
+					auto matchPacket = static_cast<MatchPacketMaker*>(packet[currentHeader].get());
 
-				printf("[매칭 시도] msg : %s\n", pClientInfo->GetUserId());
+					matchPacket->Deserialzed(pClientInfo->mRecvBuf);
 
-				//매칭 작업
-				mMatchManager->AddClientQueue(pClientInfo);
+					if (matchPacket->GetConnectionInfo() == MATCH_REQUEST)
+					{
+						printf("[매칭 시도] msg : %s\n", pClientInfo->GetUserId());
 
-				matchPacket->SetConnectionInfo(ConnectionState::MATCH_FIND);
+						//매칭 작업 True 반환 시 2명 모임.
+						if (mMatchManager->AddClientQueue(pClientInfo))
+						{
 
-				ConnectionState currentState = matchPacket->GetConnectionInfo();
+						}
+						//매칭 결과 반환
+						matchPacket->SetConnectionInfo(ConnectionState::MATCH_FIND);
 
-				memcpy(&pClientInfo->mSendBuf, &currentState, sizeof(currentState));
+						ConnectionState currentState = matchPacket->GetConnectionInfo();
+
+						memset(&pClientInfo->mSendBuf, 0, strlen(pClientInfo->mSendBuf));
+						memcpy(&pClientInfo->mSendBuf, &currentState, sizeof(currentState));
+					}
+
+				
 				}
 				
 				break;
+			case HeaderType::INGAME:
+				{
 
+				}
+				break;
 			default:
 				printf("[오류] not exists Packet\n");
 				break;
@@ -218,7 +238,7 @@ void Server::WokerThread()
 
 
 			//클라이언트에 메세지를 에코한다.
-			int bufLength = packet[currentHeader]->Serialzed(pClientInfo->mSendBuf, sizeof(pClientInfo->mSendBuf));
+			int bufLength = packet[currentHeader]->Serialzed(pClientInfo->mSendBuf, strlen(pClientInfo->mSendBuf));
 			//int bufLength = packet[currentHeader]->Serialaze(packet[currentHeader]->GetBuffer());
 
 			SendMsg(pClientInfo, pClientInfo->mSendBuf, bufLength);

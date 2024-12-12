@@ -31,6 +31,8 @@ class Server
 
 	std::shared_ptr<MatchManager> mMatchManager;
 
+	std::shared_ptr<GameSessionManager> mGameSessionManager;
+
 	bool mIsWorkerRun = true;
 
 	bool mIsAccepterRun = true;
