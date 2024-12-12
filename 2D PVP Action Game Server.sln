@@ -1,0 +1,44 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35219.272
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "2D PVP Action Game Server", "2D PVP Action Game Server\2D PVP Action Game Server.vcxproj", "{D6DEB799-40AD-4383-8CCF-02C01AA86C8B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AD65D5EF-046D-4D17-BB89-4F72FB714F84} = {AD65D5EF-046D-4D17-BB89-4F72FB714F84}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Packet", "Packet\Packet.vcxproj", "{AD65D5EF-046D-4D17-BB89-4F72FB714F84}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D6DEB799-40AD-4383-8CCF-02C01AA86C8B}.Debug|x64.ActiveCfg = Debug|x64
+		{D6DEB799-40AD-4383-8CCF-02C01AA86C8B}.Debug|x64.Build.0 = Debug|x64
+		{D6DEB799-40AD-4383-8CCF-02C01AA86C8B}.Debug|x86.ActiveCfg = Debug|Win32
+		{D6DEB799-40AD-4383-8CCF-02C01AA86C8B}.Debug|x86.Build.0 = Debug|Win32
+		{D6DEB799-40AD-4383-8CCF-02C01AA86C8B}.Release|x64.ActiveCfg = Release|x64
+		{D6DEB799-40AD-4383-8CCF-02C01AA86C8B}.Release|x64.Build.0 = Release|x64
+		{D6DEB799-40AD-4383-8CCF-02C01AA86C8B}.Release|x86.ActiveCfg = Release|Win32
+		{D6DEB799-40AD-4383-8CCF-02C01AA86C8B}.Release|x86.Build.0 = Release|Win32
+		{AD65D5EF-046D-4D17-BB89-4F72FB714F84}.Debug|x64.ActiveCfg = Debug|x64
+		{AD65D5EF-046D-4D17-BB89-4F72FB714F84}.Debug|x64.Build.0 = Debug|x64
+		{AD65D5EF-046D-4D17-BB89-4F72FB714F84}.Debug|x86.ActiveCfg = Debug|Win32
+		{AD65D5EF-046D-4D17-BB89-4F72FB714F84}.Debug|x86.Build.0 = Debug|Win32
+		{AD65D5EF-046D-4D17-BB89-4F72FB714F84}.Release|x64.ActiveCfg = Release|x64
+		{AD65D5EF-046D-4D17-BB89-4F72FB714F84}.Release|x64.Build.0 = Release|x64
+		{AD65D5EF-046D-4D17-BB89-4F72FB714F84}.Release|x86.ActiveCfg = Release|Win32
+		{AD65D5EF-046D-4D17-BB89-4F72FB714F84}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {035B2825-E021-4B50-B5AB-32A16169F322}
+	EndGlobalSection
+EndGlobal
