@@ -8,7 +8,6 @@
 #include "pch.h"
 
 #include "PacketSDK.h"
-#include "ClientInfo.h"
 #include "MatchManager.h"
 
 /*
@@ -19,7 +18,7 @@ class Server
 {
 	SOCKET listenSocket = INVALID_SOCKET;
 
-	std::vector<std::unique_ptr<PacketMaker>> packet;
+	std::vector<std::shared_ptr<PacketMaker>> packet;
 
 	std::vector<ClientInfo> mClientInfos;
 
@@ -38,6 +37,7 @@ class Server
 	bool mIsAccepterRun = true;
 
 	char mSocketBuf[1024] = { 0 };
+
 
 public:
 	Server();

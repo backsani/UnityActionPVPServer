@@ -15,6 +15,9 @@ std::shared_ptr<GameSession> MatchManager::MatchingUser()
 	auto client2 = MatchingQueue.front();
 	MatchingQueue.pop();
 
+	client1->SetsessionUserIndex(1);
+	client2->SetsessionUserIndex(2);
+
 	auto session = std::make_shared<GameSession>(SessionId++);
 	session->AddClient(client1);
 	session->AddClient(client2);

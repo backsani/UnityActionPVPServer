@@ -1,6 +1,8 @@
 ﻿  pch.cpp
   Buffer_Converter.cpp
   ClientInfo.h
+  IngamePacketMaker.cpp
+C:\Users\hj577\UnityActionPVPServer\Packet\IngamePacketMaker.cpp(19,18): warning C4267: '+=': 'size_t'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   LoginPacketMaker.cpp
 C:\Users\hj577\UnityActionPVPServer\Packet\LoginPacketMaker.cpp(21,18): warning C4267: '+=': 'size_t'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   MatchPacketMaker.cpp

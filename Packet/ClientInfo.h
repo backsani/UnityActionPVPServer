@@ -1,7 +1,6 @@
 #pragma once
 #include "pch.h"
 
-
 enum class IOOperation
 {
 	RECV,
@@ -19,6 +18,11 @@ class ClientInfo
 {
 	SOCKET _socketClient;
 	char			mUserId[20];
+	int				mSessionId;
+	Transform		mTransform;
+	float			Hp;
+	int				mSessionUserIndex;
+
 
 public:
 	char			mRecvBuf[MAX_SOCKBUF]; //데이터 버퍼
@@ -27,7 +31,7 @@ public:
 	mOverlappedEx _recvOverlappedEx;
 	mOverlappedEx _sendOverlappedEx;
 
-	ClientInfo()
+	ClientInfo() : mSessionId(0), Hp(0), mSessionUserIndex(0)
 	{
 		ZeroMemory(&_recvOverlappedEx, sizeof(mOverlappedEx));
 		ZeroMemory(&_sendOverlappedEx, sizeof(mOverlappedEx));
@@ -35,6 +39,7 @@ public:
 		memset(mSendBuf, 0, sizeof(mSendBuf));
 		memcpy(this->mUserId, mUserId, sizeof(mUserId));
 		_socketClient = INVALID_SOCKET;
+		
 	}
 
 	void SetSocket(SOCKET socket) { _socketClient = socket; }
@@ -45,4 +50,14 @@ public:
 
 	SOCKET GetSocket() { return _socketClient; }
 	char* GetUserId() { return mUserId; }
+
+	int GetSessionId() { return mSessionId; }
+	int GetsessionUserIndex() { return mSessionUserIndex; }
+	float GetUserHp() { return Hp; }
+	Transform GetUserTransform() { return mTransform; }
+
+	void SetsessionUserIndex(int sessionUserIndex) { mSessionUserIndex = sessionUserIndex; }
+	void SetSessionId(int sessionId) { mSessionId = sessionId; }
+	void SetUserHp(float hp) { Hp = hp; }
+	void SetUserTransform(Transform transform) { mTransform = transform; }
 };

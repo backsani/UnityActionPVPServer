@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffer_Converter.h" />
+    <ClInclude Include="IngamePacketMaker.h" />
     <ClInclude Include="LoginPacketMaker.h" />
     <ClInclude Include="MatchPacketMaker.h" />
     <ClInclude Include="Packet.h" />
@@ -29,6 +30,7 @@
   <ItemGroup>
     <ClCompile Include="Buffer_Converter.cpp" />
     <ClCompile Include="ClientInfo.h" />
+    <ClCompile Include="IngamePacketMaker.cpp" />
     <ClCompile Include="LoginPacketMaker.cpp" />
     <ClCompile Include="MatchPacketMaker.cpp" />
     <ClCompile Include="Packet.cpp" />

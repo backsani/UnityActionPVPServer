@@ -20,13 +20,16 @@ private:
 	GameState state;
 
 public:
-	GameSession(int sessionId) : sessionId(sessionId), state(GameState::WAITING){}
+	GameSession(int sessionId); 
 
 	void AddClient(ClientInfo* client);
 	void RemoveClient(SOCKET playerId);
 
+	void Test();
+
 	GameState GetState() const { return state; }
 	int GetSessionId() { return sessionId; }
+	vector<ClientInfo*>& GetClient() { return clients; }
 
 	void PrintSessionInfo() const {
 		std::cout << "Session ID: " << sessionId << "\nPlayers: ";

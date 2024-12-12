@@ -4,10 +4,11 @@
 패킷 추가 시 서버 생성자에서 패킷 벡터에 추가시켜줘야한다.
 */
 Server::Server() {
-	this->packet.push_back(std::make_unique<LoginPacketMaker>());
-	this->packet.push_back(std::make_unique<MatchPacketMaker>());
+	this->packet.push_back(std::make_shared<LoginPacketMaker>());
+	this->packet.push_back(std::make_shared<MatchPacketMaker>());
+	this->packet.push_back(std::make_shared<IngamePacketMaker>());
 	// 윈속 초기화
-	mGameSessionManager = std::make_shared<GameSessionManager>();
+	mGameSessionManager = std::make_shared<GameSessionManager>(4);
 	mMatchManager = std::make_shared<MatchManager>(mGameSessionManager);
 	
 }
@@ -51,7 +52,7 @@ bool Server::BindSocket()
 	serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	//위에서 지정한 서버 주소 정보와 cIOCompletionPort 소켓을 연결한다.
-	if (bind(listenSocket, (SOCKADDR*)&serverAddr, sizeof(SOCKADDR_IN)))
+	if (::bind(listenSocket, (SOCKADDR*)&serverAddr, sizeof(SOCKADDR_IN)))
 	{
 		printf("[에러] bind()함수 실패 : %d\n", WSAGetLastError());
 		return false;
@@ -211,13 +212,16 @@ void Server::WokerThread()
 						{
 
 						}
-						//매칭 결과 반환
-						matchPacket->SetConnectionInfo(ConnectionState::MATCH_FIND);
+						else {
+							//매칭 결과 반환
+							matchPacket->SetConnectionInfo(ConnectionState::MATCH_FIND);
 
-						ConnectionState currentState = matchPacket->GetConnectionInfo();
+							ConnectionState currentState = matchPacket->GetConnectionInfo();
 
-						memset(&pClientInfo->mSendBuf, 0, strlen(pClientInfo->mSendBuf));
-						memcpy(&pClientInfo->mSendBuf, &currentState, sizeof(currentState));
+							memset(&pClientInfo->mSendBuf, 0, strlen(pClientInfo->mSendBuf));
+							memcpy(&pClientInfo->mSendBuf, &currentState, sizeof(currentState));
+						}
+						
 					}
 
 				
@@ -226,7 +230,11 @@ void Server::WokerThread()
 				break;
 			case HeaderType::INGAME:
 				{
+					auto ingamePacket = static_cast<IngamePacketMaker*>(packet[currentHeader].get());
 
+					ingamePacket->Deserialzed(pClientInfo->mRecvBuf);
+
+					mGameSessionManager->ProcessingSessionPacket(pClientInfo->GetSessionId(), ingamePacket);
 				}
 				break;
 			default:

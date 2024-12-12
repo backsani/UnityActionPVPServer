@@ -5,6 +5,7 @@
 #include <queue>
 #include <functional>
 #include <mutex>
+#include "PacketSDK.h"
 
 using namespace std;
 
@@ -16,7 +17,7 @@ public:
 	~SessionThreadPool();
 
 	//작업 큐에 작업을 추가해주는 함수
-	void addTask();
+	void addTask(const std::function<void()>& task);
 
 private:
 	void workerThread();

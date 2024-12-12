@@ -6,5 +6,6 @@
 #include "PacketMaker.h"
 #include "LoginPacketMaker.h"
 #include "MatchPacketMaker.h"
+#include "IngamePacketMaker.h"
 
 #include "Buffer_Converter.h"

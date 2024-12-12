@@ -7,6 +7,7 @@ c:\users\hj577\unityactionpvpserver\packet\x64\debug\packetmaker.obj
 c:\users\hj577\unityactionpvpserver\packet\x64\debug\packet.obj
 c:\users\hj577\unityactionpvpserver\packet\x64\debug\matchpacketmaker.obj
 c:\users\hj577\unityactionpvpserver\packet\x64\debug\loginpacketmaker.obj
+c:\users\hj577\unityactionpvpserver\packet\x64\debug\ingamepacketmaker.obj
 c:\users\hj577\unityactionpvpserver\packet\x64\debug\clientinfo.obj
 c:\users\hj577\unityactionpvpserver\packet\x64\debug\buffer_converter.obj
 c:\users\hj577\unityactionpvpserver\x64\debug\packet.lib

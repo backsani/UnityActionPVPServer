@@ -7,6 +7,7 @@ public:
 	Buffer_Converter();
 
 	HeaderType GetHeader(char* buffer);
+	int GetSessionId(char* buffer);
 
 	~Buffer_Converter();
 };
