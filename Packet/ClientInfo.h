@@ -19,6 +19,7 @@ class ClientInfo
 	SOCKET _socketClient;
 	char			mUserId[20];
 	int				mSessionId;
+
 	Transform		mTransform;
 	float			Hp;
 	int				mSessionUserIndex;
@@ -60,4 +61,41 @@ public:
 	void SetSessionId(int sessionId) { mSessionId = sessionId; }
 	void SetUserHp(float hp) { Hp = hp; }
 	void SetUserTransform(Transform transform) { mTransform = transform; }
+
+	char* GetClientInfo(char* clientInfo)
+	{
+		//세션 유저 아이디 | 좌표 | 체력 으로 배치
+		int Length = 0;
+
+		memcpy(clientInfo + Length, &mSessionId, sizeof(mSessionId));
+		Length += sizeof(mSessionId);
+
+		memcpy(clientInfo + Length, &mTransform, sizeof(mTransform));
+		Length += sizeof(mSessionId);
+
+		memcpy(clientInfo + Length, &Hp, sizeof(mSessionId));
+		Length += sizeof(mSessionId);
+
+		return clientInfo;
+	}
+
+	int GetClientInfoLength()
+	{
+		return sizeof(mTransform) + sizeof(Hp) + sizeof(mSessionUserIndex);
+	}
+
+	void SetClientInfo(char* buffer)
+	{
+		int Length = 0;
+
+		memcpy(&mSessionId, buffer + Length, sizeof(mSessionId));
+		Length += sizeof(mSessionId);
+
+		memcpy(&mTransform, buffer + Length, sizeof(mTransform));
+		Length += sizeof(mSessionId);
+
+		memcpy(&Hp, buffer + Length, sizeof(mSessionId));
+		Length += sizeof(mSessionId);
+		return;
+	}
 };

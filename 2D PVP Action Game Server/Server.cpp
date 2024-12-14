@@ -8,7 +8,7 @@ Server::Server() {
 	this->packet.push_back(std::make_shared<MatchPacketMaker>());
 	this->packet.push_back(std::make_shared<IngamePacketMaker>());
 	// 윈속 초기화
-	mGameSessionManager = std::make_shared<GameSessionManager>(4);
+	mGameSessionManager = std::make_shared<GameSessionManager>(this, 4);
 	mMatchManager = std::make_shared<MatchManager>(mGameSessionManager);
 	
 }
@@ -207,10 +207,15 @@ void Server::WokerThread()
 					{
 						printf("[매칭 시도] msg : %s\n", pClientInfo->GetUserId());
 
-						//매칭 작업 True 반환 시 2명 모임.
-						if (mMatchManager->AddClientQueue(pClientInfo))
-						{
+						//세션이 만들어 졌으면 즉, 2명이 매칭 되면 세션 아이디 반환, 아니면 0 반환
+						int currentSessionId = mMatchManager->AddClientQueue(pClientInfo);
 
+						//매칭 작업 0 반환 시 2명 아직 안 모임.
+						if (currentSessionId != 0)
+						{
+							matchPacket->SetConnectionInfo(MATCH_ACCEPT);
+							mGameSessionManager->ProcessingSessionPacket(currentSessionId, matchPacket);
+							continue;
 						}
 						else {
 							//매칭 결과 반환
@@ -233,6 +238,7 @@ void Server::WokerThread()
 					auto ingamePacket = static_cast<IngamePacketMaker*>(packet[currentHeader].get());
 
 					ingamePacket->Deserialzed(pClientInfo->mRecvBuf);
+					pClientInfo->SetClientInfo(pClientInfo->mRecvBuf);
 
 					mGameSessionManager->ProcessingSessionPacket(pClientInfo->GetSessionId(), ingamePacket);
 				}
@@ -256,7 +262,7 @@ void Server::WokerThread()
 		//Overlapped I/O Send작업 결과 뒤 처리
 		else if (IOOperation::SEND == pOverlappedEx->_operation)
 		{
-			printf("[송신] msg : %s\n", pClientInfo->mSendBuf);
+			printf("[송신] %d : %s\n", pClientInfo->GetSocket(), pClientInfo->mSendBuf);
 		}
 		//예외 상황
 		else

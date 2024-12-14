@@ -1,6 +1,6 @@
 #include "GameSession.h"
 
-GameSession::GameSession(int sessionId) : sessionId(sessionId), state(GameState::WAITING) 
+GameSession::GameSession(int sessionId) : sessionId(sessionId), mState(GameState::WAITING) 
 {
 
 }
@@ -10,7 +10,6 @@ void GameSession::AddClient(ClientInfo* client)
 	clients.push_back(client);
 	if (clients.size() == 2)
 	{
-		state = GameState::PLAY;
 		PrintSessionInfo();
 	}
 }

@@ -16,6 +16,8 @@
 
 class Server
 {
+	friend class GameSessionManager;
+
 	SOCKET listenSocket = INVALID_SOCKET;
 
 	std::vector<std::shared_ptr<PacketMaker>> packet;

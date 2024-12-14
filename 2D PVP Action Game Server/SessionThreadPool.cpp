@@ -1,7 +1,7 @@
 #include "SessionThreadPool.h"
 
 
-SessionThreadPool::SessionThreadPool(size_t numThreads)
+SessionThreadPool::SessionThreadPool(size_t numThreads) : isRunning(true)
 {
 	for (int i = 0; i < numThreads; i++)
 	{

@@ -5,10 +5,10 @@ MatchManager::MatchManager(std::shared_ptr<GameSessionManager> sessionManager) :
 
 }
 
-std::shared_ptr<GameSession> MatchManager::MatchingUser()
+int MatchManager::MatchingUser()
 {
 	if (MatchingQueue.size() < 2)
-		return nullptr;
+		return 0;
 
 	auto client1 = MatchingQueue.front();
 	MatchingQueue.pop();
@@ -23,13 +23,12 @@ std::shared_ptr<GameSession> MatchManager::MatchingUser()
 	session->AddClient(client2);
 	mGameSessionManager->AddSession(session);
 
-	return session;
+	return session->GetSessionId();
 }
 
-bool MatchManager::AddClientQueue(ClientInfo* client)
+int MatchManager::AddClientQueue(ClientInfo* client)
 {
 	MatchingQueue.push(client);
-	if (MatchingUser())
-		return true;
-	return false;
+	
+	return MatchingUser();
 }

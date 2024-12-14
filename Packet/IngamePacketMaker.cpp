@@ -8,7 +8,7 @@ IngamePacketMaker::IngamePacketMaker()
 
 int IngamePacketMaker::Serialzed(char* buffer, int size)
 {
-	char* data = new char[size + sizeof(PacketHeader)];
+	char* data = new char[sizeof(PacketHeader) + sizeof(ConnectionInfo) + size];
 	int Length = 0;
 	Length = PackingHeader(data);
 
@@ -31,8 +31,10 @@ void IngamePacketMaker::Deserialzed(char* buffer)
 	memcpy(&ConnectionInfo, buffer + Length, sizeof(ConnectionState));
 	Length += sizeof(ConnectionState);
 
-	
+	memcpy(&buffer, buffer + Length, strlen(buffer) - Length);
+	Length += strlen(buffer) - Length;
 
-	
+	buffer[Length] = '\0';
+
 	return;
 }

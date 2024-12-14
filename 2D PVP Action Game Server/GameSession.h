@@ -8,6 +8,7 @@
 enum GameState
 {
 	WAITING,
+	READY,
 	PLAY,
 	COMPLETED
 };
@@ -17,7 +18,7 @@ class GameSession
 private:
 	int sessionId;
 	std::vector<ClientInfo*> clients;
-	GameState state;
+	GameState mState;
 
 public:
 	GameSession(int sessionId); 
@@ -27,16 +28,18 @@ public:
 
 	void Test();
 
-	GameState GetState() const { return state; }
+	GameState GetState() const { return mState; }
 	int GetSessionId() { return sessionId; }
-	vector<ClientInfo*>& GetClient() { return clients; }
+	std::vector<ClientInfo*>& GetClient() { return clients; }
+
+	void SetState(GameState state) { mState = state; }
 
 	void PrintSessionInfo() const {
 		std::cout << "Session ID: " << sessionId << "\nPlayers: ";
 		for (const auto& client : clients) {
 			std::cout << client->GetUserId() << " ";
 		}
-		std::cout << "\nState: " << static_cast<int>(state) << std::endl;
+		std::cout << "\nState: " << static_cast<int>(mState) << std::endl;
 	}
 };
 

@@ -13,7 +13,7 @@ private:
 public:
 	MatchManager(std::shared_ptr<GameSessionManager> sessionManager);
 
-	std::shared_ptr<GameSession> MatchingUser();
-	bool AddClientQueue(ClientInfo* client);
+	int MatchingUser();
+	int AddClientQueue(ClientInfo* client);
 };
 

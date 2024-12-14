@@ -5,6 +5,7 @@
 #include "GameSession.h"
 #include "SessionThreadPool.h"
 
+class Server;
 
 
 class GameSessionManager
@@ -16,8 +17,10 @@ private:
 	std::map<int, std::shared_ptr<GameSession>> SessionMap;
 	std::shared_ptr<SessionThreadPool> mThreadPool;
 
+	Server* mServer;
+
 public:
-	GameSessionManager(int numThread);
+	GameSessionManager(Server* server, int numThread);
 	~GameSessionManager();
 
 	//Add, Remove 둘 다 뮤텍스가 필요할 수도 있다.
@@ -29,5 +32,7 @@ public:
 
 	//TODO: 매개변수로 패킷 넘기기
 	void ProcessingSessionPacket(int sessionId, PacketMaker* paket);
+
+	Server* GetServer() { return mServer; }
 };
 

@@ -14,7 +14,8 @@ enum ConnectionState
 	MATCH_REQUEST,
 	MATCH_FIND,
 	MATCH_ACCEPT,
-	MATCH_REFUSE
+	MATCH_REFUSE,
+	INGAME_MOVE
 };
 
 class PacketMaker
@@ -26,7 +27,13 @@ public:
 	virtual int Serialzed(char* buffer, int size) = 0;
 	virtual void Deserialzed(char* buffer) = 0;
 
+	virtual void SetConnectionInfo(ConnectionState state) = 0;
+
+	virtual ConnectionState GetConnectionInfo() = 0;
+
 protected:
 	int UnpackingHeader(char* buffer);
 	int PackingHeader(char* buffer);
+
+
 };
