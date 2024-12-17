@@ -7,6 +7,7 @@ SessionThreadPool::SessionThreadPool(size_t numThreads) : isRunning(true)
 	{
 		workers.emplace_back([this]() { workerThread(); });
 	}
+    
 }
 
 SessionThreadPool::~SessionThreadPool()
@@ -34,6 +35,8 @@ void SessionThreadPool::addTask(const std::function<void()>& task)
 
 void SessionThreadPool::workerThread()
 {
+    void initializePacketList();
+
     while (true) {
         std::function<void()> task;
         {

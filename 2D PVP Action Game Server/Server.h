@@ -14,13 +14,15 @@
 패킷 추가시 생성자에서 패킷 버퍼에 추가시켜줘야한다. 또한 PacketSDK에서 해당 헤더를 선언해줘야한다.
 */
 
+extern thread_local std::vector<std::shared_ptr<PacketMaker>> packet;
+
+void initializePacketList();
+
 class Server
 {
 	friend class GameSessionManager;
 
 	SOCKET listenSocket = INVALID_SOCKET;
-
-	std::vector<std::shared_ptr<PacketMaker>> packet;
 
 	std::vector<ClientInfo> mClientInfos;
 

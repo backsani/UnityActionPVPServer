@@ -15,6 +15,7 @@ enum ConnectionState
 	MATCH_FIND,
 	MATCH_ACCEPT,
 	MATCH_REFUSE,
+	INGAME_INIT,
 	INGAME_MOVE
 };
 
@@ -28,6 +29,8 @@ public:
 	virtual void Deserialzed(char* buffer) = 0;
 
 	virtual void SetConnectionInfo(ConnectionState state) = 0;
+	void SetLength(int length) { packetHeader.Length = length; }
+	void SetUserId(char* userId) { memcpy(&packetHeader.userId, userId, 20); }
 
 	virtual ConnectionState GetConnectionInfo() = 0;
 

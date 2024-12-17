@@ -2,8 +2,6 @@
 #include <string>
 #define BUFSIZE 256
 
-using namespace std;
-
 enum HeaderType
 {
 	ACCEPT,

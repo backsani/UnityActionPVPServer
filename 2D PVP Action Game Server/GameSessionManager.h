@@ -31,7 +31,9 @@ public:
 	std::shared_ptr<SessionThreadPool> GetSessionThreadPool() { return mThreadPool; }
 
 	//TODO: 매개변수로 패킷 넘기기
-	void ProcessingSessionPacket(int sessionId, PacketMaker* paket);
+	void ProcessingSessionPacket(int sessionId, ConnectionState state);
+
+	void SessionUpdate();
 
 	Server* GetServer() { return mServer; }
 };

@@ -67,14 +67,14 @@ public:
 		//세션 유저 아이디 | 좌표 | 체력 으로 배치
 		int Length = 0;
 
-		memcpy(clientInfo + Length, &mSessionId, sizeof(mSessionId));
-		Length += sizeof(mSessionId);
+		memcpy(clientInfo + Length, &mSessionUserIndex, sizeof(mSessionUserIndex));
+		Length += sizeof(mSessionUserIndex);
 
 		memcpy(clientInfo + Length, &mTransform, sizeof(mTransform));
-		Length += sizeof(mSessionId);
+		Length += sizeof(mTransform);
 
 		memcpy(clientInfo + Length, &Hp, sizeof(mSessionId));
-		Length += sizeof(mSessionId);
+		Length += sizeof(Hp);
 
 		return clientInfo;
 	}
@@ -88,14 +88,14 @@ public:
 	{
 		int Length = 0;
 
-		memcpy(&mSessionId, buffer + Length, sizeof(mSessionId));
-		Length += sizeof(mSessionId);
+		memcpy(&mSessionUserIndex, buffer + Length, sizeof(mSessionUserIndex));
+		Length += sizeof(mSessionUserIndex);
 
 		memcpy(&mTransform, buffer + Length, sizeof(mTransform));
-		Length += sizeof(mSessionId);
+		Length += sizeof(mTransform);
 
-		memcpy(&Hp, buffer + Length, sizeof(mSessionId));
-		Length += sizeof(mSessionId);
+		memcpy(&Hp, buffer + Length, sizeof(Hp));
+		Length += sizeof(Hp);
 		return;
 	}
 };

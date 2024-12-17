@@ -1,2 +1,7 @@
 ﻿  GameSessionManager.cpp
+  Main.cpp
+  Server.cpp
+C:\Users\hj577\UnityActionPVPServer\2D PVP Action Game Server\Server.cpp(205,21): warning C4267: '초기화 중': 'size_t'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\hj577\UnityActionPVPServer\2D PVP Action Game Server\Server.cpp(265,82): warning C4267: '인수': 'size_t'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  코드를 생성하고 있습니다...
   2D PVP Action Game Server.vcxproj -> C:\Users\hj577\UnityActionPVPServer\x64\Debug\2D PVP Action Game Server.exe

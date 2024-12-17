@@ -15,10 +15,12 @@ int IngamePacketMaker::Serialzed(char* buffer, int size)
 	memcpy(data + Length, &ConnectionInfo, sizeof(ConnectionInfo));
 	Length += sizeof(ConnectionInfo);
 
-	memcpy(data + Length, buffer, strlen(buffer));
-	Length += strlen(buffer);
+	memcpy(data + Length, buffer, size);
+	Length += size;
 
 	memcpy(buffer, data, Length);
+
+	delete[] data;
 
 	return Length;
 }

@@ -1,12 +1,20 @@
 #include "Server.h"
 
+thread_local std::vector<std::shared_ptr<PacketMaker>> packet;
+
+void initializePacketList() {
+	if (packet.empty()) {  // 중복 초기화 방지
+		packet.push_back(std::make_shared<LoginPacketMaker>());
+		packet.push_back(std::make_shared<MatchPacketMaker>());
+		packet.push_back(std::make_shared<IngamePacketMaker>());
+		printf("패킷 생성");
+	}
+}
+
 /*
 패킷 추가 시 서버 생성자에서 패킷 벡터에 추가시켜줘야한다.
 */
 Server::Server() {
-	this->packet.push_back(std::make_shared<LoginPacketMaker>());
-	this->packet.push_back(std::make_shared<MatchPacketMaker>());
-	this->packet.push_back(std::make_shared<IngamePacketMaker>());
 	// 윈속 초기화
 	mGameSessionManager = std::make_shared<GameSessionManager>(this, 4);
 	mMatchManager = std::make_shared<MatchManager>(mGameSessionManager);
@@ -104,7 +112,6 @@ void Server::CreateClient(const UINT32 maxClientCount)
 
 bool Server::CreateWokerThread()
 {
-	unsigned int uiThreadId = 0;
 	//WaingThread Queue에 대기 상태로 넣을 쓰레드들 생성 권장되는 개수 : (cpu개수 * 2) + 1 
 	for (int i = 0; i < MAX_WORKERTHREAD; i++)
 	{
@@ -125,6 +132,8 @@ bool Server::CreateAccepterThread()
 
 void Server::WokerThread()
 {
+	initializePacketList();
+
 	ClientInfo* pClientInfo = nullptr;
 	BOOL bSuccess = TRUE;
 	DWORD dwIoSize = 0;
@@ -214,7 +223,7 @@ void Server::WokerThread()
 						if (currentSessionId != 0)
 						{
 							matchPacket->SetConnectionInfo(MATCH_ACCEPT);
-							mGameSessionManager->ProcessingSessionPacket(currentSessionId, matchPacket);
+							mGameSessionManager->ProcessingSessionPacket(currentSessionId, MATCH_ACCEPT);
 							continue;
 						}
 						else {
@@ -240,7 +249,8 @@ void Server::WokerThread()
 					ingamePacket->Deserialzed(pClientInfo->mRecvBuf);
 					pClientInfo->SetClientInfo(pClientInfo->mRecvBuf);
 
-					mGameSessionManager->ProcessingSessionPacket(pClientInfo->GetSessionId(), ingamePacket);
+					//INGAME_MOVE, 등등 넘겨줌.
+					//mGameSessionManager->ProcessingSessionPacket(pClientInfo->GetSessionId(), ingamePacket);
 				}
 				break;
 			default:
@@ -262,7 +272,7 @@ void Server::WokerThread()
 		//Overlapped I/O Send작업 결과 뒤 처리
 		else if (IOOperation::SEND == pOverlappedEx->_operation)
 		{
-			printf("[송신] %d : %s\n", pClientInfo->GetSocket(), pClientInfo->mSendBuf);
+			printf("[송신] %lld : %s\n", pClientInfo->GetSocket(), pClientInfo->mSendBuf);
 		}
 		//예외 상황
 		else
