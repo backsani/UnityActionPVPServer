@@ -105,7 +105,7 @@ void Server::CreateClient(const UINT32 maxClientCount)
 {
 	for (UINT32 i = 0; i < maxClientCount; i++)
 	{
-		mClientInfos.emplace_back();
+		mClientInfos.emplace_back(std::make_shared<ClientInfo>());
 	}
 }
 
@@ -134,7 +134,7 @@ void Server::WokerThread()
 {
 	initializePacketList();
 
-	ClientInfo* pClientInfo = nullptr;
+	std::shared_ptr<ClientInfo> pClientInfo = nullptr;
 	BOOL bSuccess = TRUE;
 	DWORD dwIoSize = 0;
 	LPOVERLAPPED lpOverlapped = NULL;
@@ -151,6 +151,14 @@ void Server::WokerThread()
 			&lpOverlapped,				// Overlapped IO 객체
 			INFINITE);					// 대기할 시간
 
+		if (pClientInfo == nullptr)
+		{
+			printf("버그\n\n\n");
+			continue;
+		}
+
+		std::lock_guard<std::mutex> lock(pClientInfo->mtx);
+
 		//사용자 쓰레드 종료 메세지 처리..
 		if (TRUE == bSuccess && 0 == dwIoSize && NULL == lpOverlapped)
 		{
@@ -166,16 +174,29 @@ void Server::WokerThread()
 		//client가 접속을 끊었을때..			
 		if (FALSE == bSuccess || (0 == dwIoSize && TRUE == bSuccess))
 		{
-			printf("socket(%d) 접속 끊김\n", (int)pClientInfo->GetSocket());
-			CloseSocket(pClientInfo);
+			std::lock_guard<std::mutex> lock(closeSocketMutex);
+			if (pClientInfo->isConnected == true)
+			{
+				printf("socket(%d) 접속 끊김\n", (int)pClientInfo->GetSocket());
+				CloseSocket(pClientInfo);
+				pClientInfo->isConnected = false;
+			}
 			continue;
 		}
+
+		
+		/*if (dwIoSize != bufferCon.GetLength(pClientInfo->mRecvBuf))
+		{
+			continue;
+		}*/
 
 
 		auto pOverlappedEx = (mOverlappedEx*)lpOverlapped;
 
 		currentHeader = bufferCon.GetHeader(pClientInfo->mRecvBuf);
 
+		//if(currentHeader == )
+		//packet[currentHeader]->SetConnectionInfo(INIT);
 
 		/*------------------
 				공사중
@@ -217,13 +238,13 @@ void Server::WokerThread()
 						printf("[매칭 시도] msg : %s\n", pClientInfo->GetUserId());
 
 						//세션이 만들어 졌으면 즉, 2명이 매칭 되면 세션 아이디 반환, 아니면 0 반환
-						int currentSessionId = mMatchManager->AddClientQueue(pClientInfo);
+						std::shared_ptr<GameSession> currentSession = mMatchManager->AddClientQueue(pClientInfo);
 
 						//매칭 작업 0 반환 시 2명 아직 안 모임.
-						if (currentSessionId != 0)
+						if (currentSession)
 						{
 							matchPacket->SetConnectionInfo(MATCH_ACCEPT);
-							mGameSessionManager->ProcessingSessionPacket(currentSessionId, MATCH_ACCEPT);
+							mGameSessionManager->ProcessingSessionPacket(currentSession->GetSessionId(), MATCH_ACCEPT);
 							continue;
 						}
 						else {
@@ -246,11 +267,13 @@ void Server::WokerThread()
 				{
 					auto ingamePacket = static_cast<IngamePacketMaker*>(packet[currentHeader].get());
 
-					ingamePacket->Deserialzed(pClientInfo->mRecvBuf);
-					pClientInfo->SetClientInfo(pClientInfo->mRecvBuf);
+					char recvBuffer[128] = { 0 };
+					memcpy(recvBuffer, pClientInfo->mRecvBuf, sizeof(recvBuffer));
+					ingamePacket->Deserialzed(recvBuffer);
+					pClientInfo->SetClientInfo(recvBuffer);
 
-					//INGAME_MOVE, 등등 넘겨줌.
-					//mGameSessionManager->ProcessingSessionPacket(pClientInfo->GetSessionId(), ingamePacket);
+					
+					continue;
 				}
 				break;
 			default:
@@ -292,7 +315,7 @@ void Server::AccepterThread()
 	while (mIsAccepterRun)
 	{
 		//접속을 받을 구조체의 인덱스를 얻어온다.
-		ClientInfo* pClientInfo = GetEmptyClientInfo();
+		std::shared_ptr<ClientInfo> pClientInfo = GetEmptyClientInfo();
 		if (NULL == pClientInfo)
 		{
 			printf("[에러] Client Full\n");
@@ -325,13 +348,13 @@ void Server::AccepterThread()
 	}
 }
 
-ClientInfo* Server::GetEmptyClientInfo()
+std::shared_ptr<ClientInfo> Server::GetEmptyClientInfo()
 {
-	for (auto& client : mClientInfos)
+	for (std::shared_ptr<ClientInfo>& client : mClientInfos)
 	{
-		if (INVALID_SOCKET == client.GetSocket())
+		if (INVALID_SOCKET == client->GetSocket())
 		{
-			return &client;
+			return client;
 		}
 	}
 
@@ -360,12 +383,12 @@ void Server::DestroyThread()
 	}
 }
 
-bool Server::BindIOCompletionPort(ClientInfo* pClientInfo)
+bool Server::BindIOCompletionPort(std::shared_ptr<ClientInfo> pClientInfo)
 {
 	//socket과 pClientInfo를 CompletionPort객체와 연결시킨다.
 	auto hIOCP = CreateIoCompletionPort((HANDLE)pClientInfo->GetSocket()
 		, mIOCPHandle
-		, (ULONG_PTR)(pClientInfo), 0);
+		, (ULONG_PTR)(pClientInfo.get()), 0);
 
 	if (NULL == hIOCP || mIOCPHandle != hIOCP)
 	{
@@ -378,11 +401,12 @@ bool Server::BindIOCompletionPort(ClientInfo* pClientInfo)
 
 
 //WSARecv Overlapped I/O 작업을 시킨다.
-bool Server::BindRecv(ClientInfo* pClientInfo)
+bool Server::BindRecv(std::shared_ptr<ClientInfo> pClientInfo)
 {
 	DWORD dwFlag = 0;
 	DWORD dwRecvNumBytes = 0;
 
+	
 	//Overlapped I/O을 위해 각 정보를 셋팅해 준다.
 	pClientInfo->_recvOverlappedEx._wsaBuf.len = MAX_SOCKBUF;
 	pClientInfo->_recvOverlappedEx._wsaBuf.buf = pClientInfo->mRecvBuf;
@@ -407,7 +431,7 @@ bool Server::BindRecv(ClientInfo* pClientInfo)
 }
 
 //WSASend Overlapped I/O작업을 시킨다.
-bool Server::SendMsg(ClientInfo* pClientInfo, char* pMsg, int nLen)
+bool Server::SendMsg(std::shared_ptr<ClientInfo> pClientInfo, char* pMsg, int nLen)
 {
 	DWORD dwRecvNumBytes = 0;
 
@@ -440,7 +464,7 @@ bool Server::SendMsg(ClientInfo* pClientInfo, char* pMsg, int nLen)
 
 
 
-void Server::CloseSocket(ClientInfo* pClientInfo)
+void Server::CloseSocket(std::shared_ptr<ClientInfo> pClientInfo)
 {
 	bool bIsForce = false;
 	struct linger stLinger = { 0, 0 };	// SO_DONTLINGER로 설정
@@ -450,6 +474,8 @@ void Server::CloseSocket(ClientInfo* pClientInfo)
 	{
 		stLinger.l_onoff = 1;
 	}
+	
+	mGameSessionManager->CloseSession(pClientInfo->GetSessionId(), pClientInfo);
 
 	//socketClose소켓의 데이터 송수신을 모두 중단 시킨다.
 	shutdown(pClientInfo->GetSocket(), SD_BOTH);

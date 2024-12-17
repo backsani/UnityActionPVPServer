@@ -4,6 +4,7 @@
 
 enum HeaderType
 {
+	
 	ACCEPT,
 	MATCH,
 	INGAME

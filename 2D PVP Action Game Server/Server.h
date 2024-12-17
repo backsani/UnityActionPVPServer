@@ -24,7 +24,7 @@ class Server
 
 	SOCKET listenSocket = INVALID_SOCKET;
 
-	std::vector<ClientInfo> mClientInfos;
+	std::vector<std::shared_ptr<ClientInfo>> mClientInfos;
 
 	std::vector<std::thread> mWorkerThreads;
 
@@ -42,6 +42,9 @@ class Server
 
 	char mSocketBuf[1024] = { 0 };
 
+	std::mutex closeSocketMutex;
+
+	
 
 public:
 	Server();
@@ -65,15 +68,15 @@ public:
 
 	void AccepterThread();
 
-	ClientInfo* GetEmptyClientInfo();
+	std::shared_ptr<ClientInfo> GetEmptyClientInfo();
 
-	bool BindIOCompletionPort(ClientInfo* pClientInfo);
+	bool BindIOCompletionPort(std::shared_ptr<ClientInfo> pClientInfo);
 
-	bool BindRecv(ClientInfo* pClientInfo);
+	bool BindRecv(std::shared_ptr<ClientInfo> pClientInfo);
 
-	bool SendMsg(ClientInfo* pClientInfo, char* pMsg, int nLen);
+	bool SendMsg(std::shared_ptr<ClientInfo> pClientInfo, char* pMsg, int nLen);
 
-	void CloseSocket(ClientInfo* pClientInfo);
+	void CloseSocket(std::shared_ptr<ClientInfo> pClientInfo);
 
 	~Server();
 };

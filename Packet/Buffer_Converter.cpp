@@ -26,3 +26,12 @@ int Buffer_Converter::GetSessionId(char* buffer)
 
 	return sessionId;
 }
+
+int Buffer_Converter::GetLength(char* buffer)
+{
+	int length = 0;
+
+	memcpy(&length, buffer, sizeof(length));
+
+	return length;
+}

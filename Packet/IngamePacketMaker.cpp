@@ -33,8 +33,8 @@ void IngamePacketMaker::Deserialzed(char* buffer)
 	memcpy(&ConnectionInfo, buffer + Length, sizeof(ConnectionState));
 	Length += sizeof(ConnectionState);
 
-	memcpy(&buffer, buffer + Length, strlen(buffer) - Length);
-	Length += strlen(buffer) - Length;
+	memcpy(buffer, buffer + Length, packetHeader.Length - Length);
+	Length += packetHeader.Length - Length;
 
 	buffer[Length] = '\0';
 

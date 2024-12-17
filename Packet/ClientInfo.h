@@ -1,5 +1,6 @@
 #pragma once
 #include "pch.h"
+#include <mutex>
 
 enum class IOOperation
 {
@@ -28,11 +29,15 @@ class ClientInfo
 public:
 	char			mRecvBuf[MAX_SOCKBUF]; //데이터 버퍼
 	char			mSendBuf[MAX_SOCKBUF]; //데이터 버퍼
+	bool isConnected;
+
+	std::mutex mtx;
+
 
 	mOverlappedEx _recvOverlappedEx;
 	mOverlappedEx _sendOverlappedEx;
 
-	ClientInfo() : mSessionId(0), Hp(0), mSessionUserIndex(0)
+	ClientInfo() : mSessionId(-1), Hp(0), mSessionUserIndex(0), isConnected(true)
 	{
 		ZeroMemory(&_recvOverlappedEx, sizeof(mOverlappedEx));
 		ZeroMemory(&_sendOverlappedEx, sizeof(mOverlappedEx));
@@ -91,8 +96,14 @@ public:
 		memcpy(&mSessionUserIndex, buffer + Length, sizeof(mSessionUserIndex));
 		Length += sizeof(mSessionUserIndex);
 
-		memcpy(&mTransform, buffer + Length, sizeof(mTransform));
-		Length += sizeof(mTransform);
+		memcpy(&mTransform.xPos, buffer + Length, sizeof(mTransform.xPos));
+		Length += sizeof(mTransform.xPos);
+
+		memcpy(&mTransform.yPos, buffer + Length, sizeof(mTransform.yPos));
+		Length += sizeof(mTransform.yPos);
+
+		memcpy(&mTransform.rotation, buffer + Length, sizeof(mTransform.rotation));
+		Length += sizeof(mTransform.rotation);
 
 		memcpy(&Hp, buffer + Length, sizeof(Hp));
 		Length += sizeof(Hp);

@@ -35,6 +35,8 @@ public:
 
 	void SessionUpdate();
 
+	void CloseSession(int sessionId, std::shared_ptr<ClientInfo>);
+
 	Server* GetServer() { return mServer; }
 };
 
