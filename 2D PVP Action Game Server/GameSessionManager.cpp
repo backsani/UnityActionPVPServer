@@ -1,6 +1,7 @@
 #include "GameSessionManager.h"
 #include "Server.h"
 #include <chrono>
+#include "LogManager.h"
 
 GameSessionManager::GameSessionManager(Server* server, int numThread)
 {
@@ -40,6 +41,8 @@ void GameSessionManager::ProcessingSessionPacket(int sessionId, ConnectionState 
 	{
 		if (currentState == MATCH_ACCEPT)
 		{
+			
+			mServer->mLogManager->WirteLog(client, "¸ÅÄª ¼º°ø");
 			mThreadPool->addTask([client, &packets, this]()
 				{
 					int Length = 0;
@@ -186,6 +189,7 @@ void GameSessionManager::SessionUpdate()
 }
 
 void GameSessionManager::CloseSession(int sessionId, std::shared_ptr<ClientInfo>)
+
 {
 	std::shared_ptr<GameSession> currentSession = SessionMap[sessionId];
 	if (currentSession == nullptr)

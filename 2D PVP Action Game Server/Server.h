@@ -9,6 +9,7 @@
 
 #include "PacketSDK.h"
 #include "MatchManager.h"
+//#include "LogManager.h"
 
 /*
 패킷 추가시 생성자에서 패킷 버퍼에 추가시켜줘야한다. 또한 PacketSDK에서 해당 헤더를 선언해줘야한다.
@@ -17,6 +18,8 @@
 extern thread_local std::vector<std::shared_ptr<PacketMaker>> packet;
 
 void initializePacketList();
+
+class LogManager;
 
 class Server
 {
@@ -44,9 +47,10 @@ class Server
 
 	std::mutex closeSocketMutex;
 
-	
 
 public:
+	std::shared_ptr<LogManager> mLogManager;
+
 	Server();
 
 

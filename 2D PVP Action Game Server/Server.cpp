@@ -1,4 +1,5 @@
 #include "Server.h"
+#include "LogManager.h"
 
 thread_local std::vector<std::shared_ptr<PacketMaker>> packet;
 
@@ -18,7 +19,7 @@ Server::Server() {
 	// 윈속 초기화
 	mGameSessionManager = std::make_shared<GameSessionManager>(this, 4);
 	mMatchManager = std::make_shared<MatchManager>(mGameSessionManager);
-	
+	mLogManager = std::make_shared<LogManager>();
 }
 
 Server::~Server()
@@ -32,48 +33,63 @@ Server::~Server()
 
 bool Server::InitSocket()
 {
-	WSADATA wsaData;
+	try {
 
-	if (WSAStartup(MAKEWORD(2, 2), &wsaData))
-	{
-		printf("[에러] WSAStartup() 함수 실패 : %d\n", WSAGetLastError());
+
+		WSADATA wsaData;
+
+		if (WSAStartup(MAKEWORD(2, 2), &wsaData))
+		{
+			printf("[에러] WSAStartup() 함수 실패 : %d\n", WSAGetLastError());
+			return false;
+		}
+
+		listenSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, NULL, WSA_FLAG_OVERLAPPED);
+
+		if (listenSocket == INVALID_SOCKET)
+		{
+			printf("[에러] WSASocket() 함수 실패 : %d\n", WSAGetLastError());
+			return false;
+		}
+
+		printf("소켓 초기화 성공\n");
+		return true;
+	}
+	catch (const std::exception& e) {
+		std::cerr << "[에러] " << e.what() << std::endl;
 		return false;
 	}
-
-	listenSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, NULL, WSA_FLAG_OVERLAPPED);
-
-	if (listenSocket == INVALID_SOCKET)
-	{
-		printf("[에러] WSASocket() 함수 실패 : %d\n", WSAGetLastError());
-		return false;
-	}
-
-	printf("소켓 초기화 성공\n");
-	return true;
 }
 
 bool Server::BindSocket()
 {
-	SOCKADDR_IN serverAddr;
-	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(PORT); //서버 포트를 설정한다.				
-	serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	try {
 
-	//위에서 지정한 서버 주소 정보와 cIOCompletionPort 소켓을 연결한다.
-	if (::bind(listenSocket, (SOCKADDR*)&serverAddr, sizeof(SOCKADDR_IN)))
-	{
-		printf("[에러] bind()함수 실패 : %d\n", WSAGetLastError());
+		SOCKADDR_IN serverAddr;
+		serverAddr.sin_family = AF_INET;
+		serverAddr.sin_port = htons(PORT); //서버 포트를 설정한다.				
+		serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+		//위에서 지정한 서버 주소 정보와 cIOCompletionPort 소켓을 연결한다.
+		if (::bind(listenSocket, (SOCKADDR*)&serverAddr, sizeof(SOCKADDR_IN)))
+		{
+			printf("[에러] bind()함수 실패 : %d\n", WSAGetLastError());
+			return false;
+		}
+
+		if (listen(listenSocket, 5))
+		{
+			printf("[에러] listen()함수 실패 : %d\n", WSAGetLastError());
+			return false;
+		}
+
+		printf("서버 등록 성공..\n");
+		return true;
+	}
+	catch (const std::exception& e) {
+		std::cerr << "[에러] " << e.what() << std::endl;
 		return false;
 	}
-
-	if (listen(listenSocket, 5))
-	{
-		printf("[에러] listen()함수 실패 : %d\n", WSAGetLastError());
-		return false;
-	}
-
-	printf("서버 등록 성공..\n");
-	return true;
 }
 
 bool Server::StartServer(const UINT32 maxClientCount)
@@ -153,7 +169,6 @@ void Server::WokerThread()
 
 		if (pClientInfo == nullptr)
 		{
-			printf("버그\n\n\n");
 			continue;
 		}
 
@@ -220,6 +235,7 @@ void Server::WokerThread()
 
 					pClientInfo->SetUserId(loginPacket->GetUserId());
 
+					mLogManager->WirteLog(pClientInfo, "클라이언트 접속");
 					printf("[유저 접속] msg : %s\n", pClientInfo->GetUserId());
 					loginPacket->SetConnectionInfo(ConnectionState::LOGIN_SUCCESS);
 
@@ -235,6 +251,7 @@ void Server::WokerThread()
 
 					if (matchPacket->GetConnectionInfo() == MATCH_REQUEST)
 					{
+						mLogManager->WirteLog(pClientInfo, "매칭 시도");
 						printf("[매칭 시도] msg : %s\n", pClientInfo->GetUserId());
 
 						//세션이 만들어 졌으면 즉, 2명이 매칭 되면 세션 아이디 반환, 아니면 0 반환
@@ -272,7 +289,7 @@ void Server::WokerThread()
 					ingamePacket->Deserialzed(recvBuffer);
 					pClientInfo->SetClientInfo(recvBuffer);
 
-					
+					memset(pClientInfo->mRecvBuf, 0, sizeof(pClientInfo->mRecvBuf));
 					continue;
 				}
 				break;
@@ -295,7 +312,7 @@ void Server::WokerThread()
 		//Overlapped I/O Send작업 결과 뒤 처리
 		else if (IOOperation::SEND == pOverlappedEx->_operation)
 		{
-			printf("[송신] %lld : %s\n", pClientInfo->GetSocket(), pClientInfo->mSendBuf);
+			//printf("[송신] %lld : %s\n", pClientInfo->GetSocket(), pClientInfo->mSendBuf);
 		}
 		//예외 상황
 		else
@@ -309,42 +326,48 @@ void Server::WokerThread()
 
 void Server::AccepterThread()
 {
-	SOCKADDR_IN		stClientAddr;
-	int nAddrLen = sizeof(SOCKADDR_IN);
+	try {
 
-	while (mIsAccepterRun)
-	{
-		//접속을 받을 구조체의 인덱스를 얻어온다.
-		std::shared_ptr<ClientInfo> pClientInfo = GetEmptyClientInfo();
-		if (NULL == pClientInfo)
+		SOCKADDR_IN		stClientAddr;
+		int nAddrLen = sizeof(SOCKADDR_IN);
+
+		while (mIsAccepterRun)
 		{
-			printf("[에러] Client Full\n");
-			return;
+			//접속을 받을 구조체의 인덱스를 얻어온다.
+			std::shared_ptr<ClientInfo> pClientInfo = GetEmptyClientInfo();
+			if (NULL == pClientInfo)
+			{
+				printf("[에러] Client Full\n");
+				return;
+			}
+
+			//클라이언트 접속 요청이 들어올 때까지 기다린다.
+			pClientInfo->SetSocket(accept(listenSocket, (SOCKADDR*)&stClientAddr, &nAddrLen));
+			if (INVALID_SOCKET == pClientInfo->GetSocket())
+			{
+				continue;
+			}
+
+			//I/O Completion Port객체와 소켓을 연결시킨다.
+			if (!BindIOCompletionPort(pClientInfo))
+			{
+				return;
+			}
+
+			//Recv Overlapped I/O작업을 요청해 놓는다.
+			if (!BindRecv(pClientInfo))
+			{
+				return;
+			}
+
+			printf("클라이언트 접속 : SOCKET(%d)\n", (int)pClientInfo->GetSocket());
+
+			//클라이언트 갯수 증가
+			//++mClientCnt;
 		}
-
-		//클라이언트 접속 요청이 들어올 때까지 기다린다.
-		pClientInfo->SetSocket(accept(listenSocket, (SOCKADDR*)&stClientAddr, &nAddrLen));
-		if (INVALID_SOCKET == pClientInfo->GetSocket())
-		{
-			continue;
-		}
-
-		//I/O Completion Port객체와 소켓을 연결시킨다.
-		if (!BindIOCompletionPort(pClientInfo))
-		{
-			return;
-		}
-
-		//Recv Overlapped I/O작업을 요청해 놓는다.
-		if (!BindRecv(pClientInfo))
-		{
-			return;
-		}
-
-		printf("클라이언트 접속 : SOCKET(%d)\n", (int)pClientInfo->GetSocket());
-
-		//클라이언트 갯수 증가
-		//++mClientCnt;
+	}
+	catch (const std::exception& e) {
+		std::cerr << "[에러] " << e.what() << std::endl;
 	}
 }
 
@@ -381,6 +404,11 @@ void Server::DestroyThread()
 	{
 		mAccepterThread.join();
 	}
+
+	mGameSessionManager.reset();
+	//mGameSessionManager->GetSessionThreadPool()->~SessionThreadPool();
+
+	printf("종료");
 }
 
 bool Server::BindIOCompletionPort(std::shared_ptr<ClientInfo> pClientInfo)
@@ -406,60 +434,74 @@ bool Server::BindRecv(std::shared_ptr<ClientInfo> pClientInfo)
 	DWORD dwFlag = 0;
 	DWORD dwRecvNumBytes = 0;
 
-	
-	//Overlapped I/O을 위해 각 정보를 셋팅해 준다.
-	pClientInfo->_recvOverlappedEx._wsaBuf.len = MAX_SOCKBUF;
-	pClientInfo->_recvOverlappedEx._wsaBuf.buf = pClientInfo->mRecvBuf;
-	pClientInfo->_recvOverlappedEx._operation = IOOperation::RECV;
+	memset(pClientInfo->mRecvBuf, 0, sizeof(pClientInfo->mRecvBuf));
 
-	int nRet = WSARecv(pClientInfo->GetSocket(),
-		&(pClientInfo->_recvOverlappedEx._wsaBuf),
-		1,
-		&dwRecvNumBytes,
-		&dwFlag,
-		(LPWSAOVERLAPPED) & (pClientInfo->_recvOverlappedEx),
-		NULL);
+	try {
 
-	//socket_error이면 client socket이 끊어진걸로 처리한다.
-	if (nRet == SOCKET_ERROR && (WSAGetLastError() != ERROR_IO_PENDING))
-	{
-		printf("[에러] WSARecv()함수 실패 : %d\n", WSAGetLastError());
+		//Overlapped I/O을 위해 각 정보를 셋팅해 준다.
+		pClientInfo->_recvOverlappedEx._wsaBuf.len = MAX_SOCKBUF;
+		pClientInfo->_recvOverlappedEx._wsaBuf.buf = pClientInfo->mRecvBuf;
+		pClientInfo->_recvOverlappedEx._operation = IOOperation::RECV;
+
+		int nRet = WSARecv(pClientInfo->GetSocket(),
+			&(pClientInfo->_recvOverlappedEx._wsaBuf),
+			1,
+			&dwRecvNumBytes,
+			&dwFlag,
+			(LPWSAOVERLAPPED) & (pClientInfo->_recvOverlappedEx),
+			NULL);
+
+		//socket_error이면 client socket이 끊어진걸로 처리한다.
+		if (nRet == SOCKET_ERROR && (WSAGetLastError() != ERROR_IO_PENDING))
+		{
+			printf("[에러] WSARecv()함수 실패 : %d\n", WSAGetLastError());
+			return false;
+		}
+
+		return true;
+	}
+	catch (const std::exception& e) {
+		printf("[에러] 예외 발생: %s\n", e.what());
 		return false;
 	}
-
-	return true;
 }
 
 //WSASend Overlapped I/O작업을 시킨다.
 bool Server::SendMsg(std::shared_ptr<ClientInfo> pClientInfo, char* pMsg, int nLen)
 {
-	DWORD dwRecvNumBytes = 0;
+	try {
+		DWORD dwRecvNumBytes = 0;
 
-	//전송될 메세지를 복사
-	CopyMemory(pClientInfo->mSendBuf, pMsg, nLen);
-	pClientInfo->mSendBuf[nLen] = '\0';
+		//전송될 메세지를 복사
+		CopyMemory(pClientInfo->mSendBuf, pMsg, nLen);
+		pClientInfo->mSendBuf[nLen] = '\0';
 
 
-	//Overlapped I/O을 위해 각 정보를 셋팅해 준다.
-	pClientInfo->_sendOverlappedEx._wsaBuf.len = nLen;
-	pClientInfo->_sendOverlappedEx._wsaBuf.buf = pClientInfo->mSendBuf;
-	pClientInfo->_sendOverlappedEx._operation = IOOperation::SEND;
+		//Overlapped I/O을 위해 각 정보를 셋팅해 준다.
+		pClientInfo->_sendOverlappedEx._wsaBuf.len = nLen;
+		pClientInfo->_sendOverlappedEx._wsaBuf.buf = pClientInfo->mSendBuf;
+		pClientInfo->_sendOverlappedEx._operation = IOOperation::SEND;
 
-	int nRet = WSASend(pClientInfo->GetSocket(),
-		&(pClientInfo->_sendOverlappedEx._wsaBuf),
-		1,
-		&dwRecvNumBytes,
-		0,
-		(LPWSAOVERLAPPED) & (pClientInfo->_sendOverlappedEx),
-		NULL);
+		int nRet = WSASend(pClientInfo->GetSocket(),
+			&(pClientInfo->_sendOverlappedEx._wsaBuf),
+			1,
+			&dwRecvNumBytes,
+			0,
+			(LPWSAOVERLAPPED) & (pClientInfo->_sendOverlappedEx),
+			NULL);
 
-	//socket_error이면 client socket이 끊어진걸로 처리한다.
-	if (nRet == SOCKET_ERROR && (WSAGetLastError() != ERROR_IO_PENDING))
-	{
-		printf("[에러] WSASend()함수 실패 : %d\n", WSAGetLastError());
+		//socket_error이면 client socket이 끊어진걸로 처리한다.
+		if (nRet == SOCKET_ERROR && (WSAGetLastError() != ERROR_IO_PENDING))
+		{
+			printf("[에러] WSASend()함수 실패 : %d\n", WSAGetLastError());
+			return false;
+		}
+		return true;
+	}
+	catch (const std::exception& e) {
+		std::cerr << "[에러] " << e.what() << std::endl;
 		return false;
 	}
-	return true;
 }
 
 
@@ -476,6 +518,7 @@ void Server::CloseSocket(std::shared_ptr<ClientInfo> pClientInfo)
 	}
 	
 	mGameSessionManager->CloseSession(pClientInfo->GetSessionId(), pClientInfo);
+	mLogManager->WirteLog(pClientInfo, "클라이언트 연결해제");
 
 	//socketClose소켓의 데이터 송수신을 모두 중단 시킨다.
 	shutdown(pClientInfo->GetSocket(), SD_BOTH);
